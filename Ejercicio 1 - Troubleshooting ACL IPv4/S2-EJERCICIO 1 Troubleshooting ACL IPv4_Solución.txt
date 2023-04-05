@@ -1,0 +1,131 @@
+CCNP ENARSI
+Curso: Seguridad de la infraestructura
+Ejercicio: Troubleshooting ACL IPv4
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Desde el departamento de sistemas han reportado que no hay conectividad ICMP desde PC1 a PC2, además se requieren acciones para proporcionar administración sobre R2
+
+Completa las siguientes tareas para configurar y aplicar troubleshooting sobre ACLs IPv4
+
+
+1. Verifica la conectividad ICMP desde PC1 a PC2, realiza las verificaciones y modificaciones necesarias para proporcionar este acceso
+
+PC1> ping 172.16.1.2
+*10.1.1.1 icmp_seq=1 ttl=255 time=21.378 ms (ICMP type:3, code:13, Communication administratively prohibited)
+*10.1.1.1 icmp_seq=2 ttl=255 time=20.660 ms (ICMP type:3, code:13, Communication administratively prohibited)
+*10.1.1.1 icmp_seq=3 ttl=255 time=21.059 ms (ICMP type:3, code:13, Communication administratively prohibited)
+
+R1#show ip int | in Outgoing|Inbound|FastE
+FastEthernet0/0 is up, line protocol is up
+  Outgoing access list is not set
+  Inbound  access list is ENARSI
+FastEthernet1/0 is up, line protocol is up
+  Outgoing access list is not set
+  Inbound  access list is not set
+FastEthernet1/1 is administratively down, line protocol is down
+R1#
+
+R1#show ip access-lists ENARSI
+Extended IP access list ENARSI
+    10 deny icmp any any log (4 matches)
+    20 permit icmp any any log
+R1#
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#ip access-list extended ENARSI
+R1(config-ext-nacl)#no 10
+R1(config-ext-nacl)#end
+R1#
+
+PC1> ping 172.16.1.2
+172.16.1.2 icmp_seq=1 timeout
+ 84 bytes from 172.16.1.2 icmp_seq=2 ttl=63 time=41.119 ms
+  84 bytes from 172.16.1.2 icmp_seq=3 ttl=63 time=40.775 ms
+84 bytes from 172.16.1.2 icmp_seq=4 ttl=63 time=42.060 ms
+
+_____________________________________________________________________________________
+
+2. Se requiere proporcionar acceso a las líneas virtuales de R2 (10.1.1.2) desde R1 (10.1.1.1) vía SSH. Configura una ACL estándar que permita la gestión SSH desde la IP 10.1.1.1 de R1 a R2 
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#username cisco privilege 15 password cisco
+R2(config)#end
+
+_____________________________________________________________________________________
+
+3. Configura SSH versión 2 en R2, el dominio debe ser ENARSI y la key debe tener un tamaño de 2048 bytes
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#ip domain-name ENARSI
+R2(config)#crypto key generate rsa modulus 2048 general-key
+The name for the keys will be: R2.ENARSI
+
+% The key modulus size is 2048 bits
+% Generating 2048 bit RSA keys, keys will be non-exportable...
+[OK] (elapsed time was 1 seconds)
+
+R2(config)#
+*Dec 28 21:32:00.579: %SSH-5-ENABLED: SSH 1.99 has been enabled
+R2(config)#ip ssh version 2
+R2(config)#end
+R2#
+
+_____________________________________________________________________________________
+
+4. Configura en R2 una access-list estándar número 10 en R2 que sólo permita el acceso desde la IP de R1 (10.1.1.1) y debe realizar logging, debe aplicarse sobre todas las líneas virtuales de dicho router 
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#access-list 10 permit 10.1.1.1 0.0.0.0 log
+R2(config)#end
+R2#show run | begin line vty
+line vty 0 4
+ login
+!
+!
+end
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#line vty 0 4
+R2(config-line)#access-class 10 in
+R2(config-line)#login local
+R2(config-line)#end
+R2#
+_____________________________________________________________________________________
+
+5. Verifica el acceso SSH desde R1 a R2, funciona ¿? 
+
+Respuesta: No, no muestra proompt de inserción de password
+
+R1#ssh -l cisco 10.1.1.2
+R1#
+
+_____________________________________________________________________________________
+
+6. Revisa la configuración de R1 para determinar dónde reside el problema. Corrígelo y confirma el acceso SSH desde R1 a R2, cuál ha sido el problema ?
+
+Respuesta: el problema es que SSH es bidireccional, de tal forma que la ACL aplicada sobre la interfaz Fe0/0 de R1 bloqueaba la conexión de vuelta a través del deny implicito. Se configura una secuencia que permite la conexión y se verifica el correcto acceso SSH desde R1 a R2
+
+R1#show ip access-lists
+Extended IP access list ENARSI
+    20 permit icmp any any log
+R1#
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config-ext-nacl)#30 permit ip any any log
+R1(config-ext-nacl)#end
+R1#
+
+R1#ssh -l cisco 10.1.1.2
+Password:
+
+R2#
+R2#exit
+_____________________________________________________________________________________
+
+

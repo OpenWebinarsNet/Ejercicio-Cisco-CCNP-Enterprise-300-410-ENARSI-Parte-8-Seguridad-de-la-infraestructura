@@ -1,0 +1,17 @@
+CCNP ENARSI
+Curso: Seguridad de la infraestructura
+Ejercicio: Troubleshooting ACL IPv4
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Desde el departamento de sistemas han reportado que no hay conectividad ICMP desde PC1 a PC2, además se requieren acciones para proporcionar administración sobre R2
+
+Completa las siguientes tareas para configurar y aplicar troubleshooting sobre ACLs IPv4
+
+
+1. Verifica la conectividad ICMP desde PC1 a PC2, realiza las verificaciones y modificaciones necesarias para proporcionar este acceso
+2. Se requiere proporcionar acceso a las líneas virtuales de R2 (10.1.1.2) desde R1 (10.1.1.1) vía SSH. Configura el usuario "cisco" en R2, con nivel de privilegios 15 y password "cisco"
+3. Configura SSH versión 2 en R2, el dominio debe ser ENARSI y la key debe tener un tamaño de 2048 bytes
+4. Configura en R2 la access-list estándar número 10 en R2 que sólo permita el acceso desde la IP de R1 (10.1.1.1) y debe realizar logging, debe aplicarse sobre todas las líneas virtuales de dicho router, dichas líneas también tienen que autenticar con la BBDD local 
+5. Verifica el acceso SSH desde R1 a R2, funciona ¿? 
+6. Revisa la configuración de R1 para determinar dónde reside el problema. Corrígelo y confirma el acceso SSH desde R1 a R2
